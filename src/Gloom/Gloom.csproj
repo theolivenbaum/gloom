@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Gloom</RootNamespace>
+    <AssemblyName>Gloom</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <PackageId>Gloom</PackageId>
+    <Title>Gloom</Title>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Gloom.Tests" />
+    <InternalsVisibleTo Include="Gloom.Benchmarks" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mosaik.Core" Version="26.8.3972" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>

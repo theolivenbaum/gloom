@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gloom/Gloom.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Gloom.Tests/Gloom.Tests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Gloom.Benchmarks/Gloom.Benchmarks.csproj" />
+  </Folder>
+</Solution>

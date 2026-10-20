@@ -1,0 +1,77 @@
+# Publishes Gloom to nuget.org on every push to main, the same way NanoOCR and
+# sentence-transformers-sharp publish their packages: one CalVer version (yy.M.<buildId>) stamped
+# on the package, pushed through the 'nuget-curiosity-org' service connection.
+#
+# Packages:
+#   Gloom   src/Gloom   the library
+#
+# The tests run before the pack: they include the Go library's golden files
+# (.reference/testdata/golden), so a package that would read or write filters differently from
+# the Go library is never published.
+
+variables:
+  projectLibrary:     './src/Gloom/Gloom.csproj'
+  projectTests:       './tests/Gloom.Tests/Gloom.Tests.csproj'
+  solution:           './Gloom.slnx'
+  buildConfiguration: 'Release'
+  targetVersion:      yy.M.$(build.buildId)
+  packageDir:         '$(Build.ArtifactStagingDirectory)/packages'
+
+pool:
+  vmImage: 'windows-latest'
+
+trigger:
+- main
+
+steps:
+- checkout: self
+  fetchDepth: 10
+
+- task: PowerShell@2
+  displayName: 'Create CalVer Version'
+  inputs:
+    targetType: 'inline'
+    script: |
+      $dottedDate = (Get-Date).ToString("yy.M")
+      $buildID = $($env:BUILD_BUILDID)
+      $modBuildID = [int]$buildID % 65536  # ensure fits in int16
+      $newTargetVersion = "$dottedDate.$modBuildID"
+      Write-Host "##vso[task.setvariable variable=targetVersion;]$newTargetVersion"
+      Write-Host "Updated targetVersion to '$newTargetVersion'"
+
+- task: UseDotNet@2
+  displayName: 'Use .NET 10.0 SDK'
+  inputs:
+    packageType: sdk
+    version: 10.x
+    includePreviewVersions: false
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- task: DotNetCoreCLI@2
+  displayName: 'restore nuget'
+  inputs:
+    command: 'restore'
+    projects: '$(solution)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'test Gloom'
+  inputs:
+    command: 'test'
+    projects: '$(projectTests)'
+    arguments: '-c $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'pack Gloom'
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    projects: '$(projectLibrary)'
+    arguments: '-c $(buildConfiguration) -o $(packageDir) /p:Version=$(targetVersion)'
+
+- task: NuGetCommand@2
+  displayName: 'push Gloom'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(packageDir)/*.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'nuget-curiosity-org'
