@@ -14,11 +14,11 @@
   <PropertyGroup>
     <Version>0.1.0</Version>
     <Company>Curiosity GmbH</Company>
-    <Authors>Curiosity GmbH and the gloom authors</Authors>
+    <Authors>Curiosity GmbH, the gloom authors and the bits-and-blooms/bloom authors</Authors>
     <Product>Gloom</Product>
-    <Description>Gloom: a high-performance cache-line blocked one-hashing bloom filter for .NET, a C# port of github.com/jcalabro/gloom. Single-threaded, lock-free atomic and sharded filters, xxh3-128 hashing, UID128 keys, and a serialization format compatible with the Go library.</Description>
-    <Copyright>Copyright (c) 2026 Curiosity GmbH; Copyright (c) jcalabro</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>Gloom: high-performance bloom filters for .NET on Mosaik.Core's UID128. Ports of github.com/jcalabro/gloom (cache-line blocked one-hashing; single-threaded, lock-free atomic and sharded; xxh3-128; serialization compatible with the Go library) and github.com/bits-and-blooms/bloom (a classic filter keyed by hash-like UID128s, AVX-512 probes).</Description>
+    <Copyright>Copyright (c) 2026 Curiosity GmbH; Copyright (c) jcalabro; Copyright (c) 2014 Will Fitzgerald</Copyright>
+    <PackageLicenseExpression>MIT AND BSD-2-Clause</PackageLicenseExpression>
     <PackageTags>bloom-filter;bloom;probabilistic;xxh3;uid128;mosaik;curiosity</PackageTags>
     <PackageProjectUrl>https://github.com/theolivenbaum/gloom</PackageProjectUrl>
     <RepositoryUrl>https://github.com/theolivenbaum/gloom</RepositoryUrl>
@@ -30,5 +30,6 @@
   <!-- The repository README is the package README on nuget.org (its links are absolute for that reason). -->
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

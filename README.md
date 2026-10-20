@@ -257,6 +257,35 @@ What the numbers come from:
 - **AVX-512BW popcount** (nibble lookup + `VPSADBW`; .NET exposes no `VPOPCNTQ`) and **three interleaved
   CRC-32C streams** merged by GF(2) multiplication.
 
+### `Bloom` vs bits-and-blooms/bloom
+
+Measured in one sitting on the same kind of VM after a host change (both sides slower than the
+table above, so compare within this table only). Go 1.26 `GOAMD64=v3`, median of 5; BenchmarkDotNet
+default job. A filter for 1M keys at 1% (`m` = 9,585,059, `k` = 7), random keys.
+
+The Go library murmur3-hashes a 16-byte key on every call; a `UID128` is its own hash, so most of
+the gap on the per-key rows is the hash the C# side does not do. `TestLocations` (Go, locations
+precomputed outside the timer) is the closest like-for-like lookup.
+
+| Benchmark | Go | C# |
+| --- | ---: | ---: |
+| Add | 73.5 ns | 10.3 ns |
+| Test, member | 73.3 ns | 8.0 ns |
+| Test, member, precomputed locations (Go `TestLocations`) | 29.9 ns | — |
+| Test, non-member | 79.1 ns | 8.4 ns |
+| TestAndAdd | 83.2 ns | 11.7 ns |
+| Add, 64M-key filter (77 MB) | 327.4 ns | 88.4 ns |
+| Test, 64M-key filter | 304.4 ns | 63.1 ns |
+| ApproximatedSize | 60.8 µs | 30.1 µs |
+| Merge | 85.8 µs | 27.7 µs |
+| Serialize (`MarshalBinary`) | 1,927 µs | 384 µs |
+
+`MayContain` computes and gathers eight probes at once (AVX-512 arithmetic, two AVX2 gathers) and
+tests them without a branch per probe. The scalar loop with an early exit measured 9.2 ns on a
+member and 19.4 ns on a non-member, where the exit mispredicts. A prefetching batch path was also
+measured, and was slower than the plain loop on both the 1M-key and the 77 MB filter, so
+`Add(ReadOnlySpan<UID128>)` / `MayContain(keys, results)` are plain loops.
+
 ## Building, testing, benchmarking
 
 ```bash
@@ -273,4 +302,6 @@ on every push to `main`, versioned `yy.M.<buildId>`.
 
 ## License
 
-MIT, as the original. Copyright (c) 2026 jcalabro (the Go library) and Curiosity GmbH (this port).
+MIT (`LICENSE`), as jcalabro/gloom: Copyright (c) 2026 jcalabro and Curiosity GmbH. `Bloom` is derived
+from bits-and-blooms/bloom, BSD-2-Clause, Copyright (c) 2014 Will Fitzgerald — see
+[`THIRD-PARTY-NOTICES.md`](https://github.com/theolivenbaum/gloom/blob/main/THIRD-PARTY-NOTICES.md).
