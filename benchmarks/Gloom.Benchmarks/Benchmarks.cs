@@ -5,7 +5,7 @@ using UID;
 namespace Gloom.Benchmarks;
 
 /// <summary>
-/// The Go library's benchmarks (.reference/benchmarks/benchmark_test.go), same workloads: a
+/// The Go library's benchmarks (.reference/gloom/benchmarks/benchmark_test.go), same workloads: a
 /// filter for 1M items at 1%, keys "key-0" … "key-999999" cycled through. Each invocation runs
 /// over all 1M keys, so the reported time per operation is directly comparable with Go's ns/op.
 /// BenchmarkDotNet runs pilot and warm-up iterations first, so tiered JIT is out of the figures.

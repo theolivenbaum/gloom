@@ -6,7 +6,7 @@
 #   Gloom   src/Gloom   the library
 #
 # The tests run before the pack: they include the Go library's golden files
-# (.reference/testdata/golden), so a package that would read or write filters differently from
+# (.reference/gloom/testdata/golden), so a package that would read or write filters differently from
 # the Go library is never published.
 
 variables:

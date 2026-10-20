@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <!-- The Go library's golden files are the compatibility contract: tested in place, never copied or edited. -->
-    <None Include="../../.reference/testdata/golden/**" LinkBase="golden" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../.reference/gloom/testdata/golden/**" LinkBase="golden" CopyToOutputDirectory="PreserveNewest" />
     <None Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

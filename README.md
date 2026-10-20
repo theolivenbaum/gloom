@@ -1,9 +1,15 @@
 # Gloom
 
-A high-performance bloom filter for .NET, implementing cache-line blocked one-hashing (OHBF). A C#
-port of [jcalabro/gloom](https://github.com/jcalabro/gloom) (Go); the original sources live in
-[`.reference/`](https://github.com/theolivenbaum/gloom/tree/main/.reference) and are the
-specification. Filters serialized by either library load in the other.
+High-performance bloom filters for .NET, as two C# ports of Go libraries. The Go sources live in
+[`.reference/`](https://github.com/theolivenbaum/gloom/tree/main/.reference), one folder per
+library:
+
+- **`BloomFilter`, `AtomicBloomFilter`, `ShardedAtomicBloomFilter`** — cache-line blocked
+  one-hashing (OHBF), a port of [jcalabro/gloom](https://github.com/jcalabro/gloom)
+  (`.reference/gloom`). Bit-compatible: filters serialized by either library load in the other.
+- **`Bloom`** — a classic m-bit, k-probe bloom filter keyed by `UID128`, a port of
+  [bits-and-blooms/bloom](https://github.com/bits-and-blooms/bloom) (`.reference/bloom`). Not
+  compatible with the Go library: the key is used as its own hash.
 
 ```
 dotnet add package Gloom
@@ -60,6 +66,37 @@ UID128 hash = BloomHash.Hash("some key");
 filter.AddHash(hash);
 ```
 
+### `Bloom`: a classic filter over `UID128` hashes
+
+```csharp
+// 1 million keys at 1%: m = 9,585,059 bits, k = 7.
+var bloom = Bloom.WithEstimates(1_000_000, 0.01);   // or new Bloom(m, k)
+
+UID128 key = UID128.New();   // or Hashes.Hash128(...) — any uniformly distributed UID128
+bloom.Add(key);
+bloom.MayContain(key);       // true
+bloom.TestAndAdd(key);       // test, then set every bit
+bloom.TestOrAdd(key);        // test, then set only the missing bits
+
+bloom.Add(keys);                           // batch, prefetched
+int hits = bloom.MayContain(keys, results);
+
+bloom.Merge(other);          // same m and k
+var copy = bloom.Copy();
+ulong n  = bloom.ApproximatedSize();
+byte[] bytes = bloom.Serialize();  var back = Bloom.Deserialize(bytes);
+
+var (m, k)  = Bloom.EstimateParameters(1_000_000, 0.01);
+double fp   = Bloom.EstimateFalsePositiveRate(m, k, 1_000_000);   // measured
+double fp2  = Bloom.TheoreticalFalsePositiveRate(m, k, 1_000_000); // (1 - e^(-kn/m))^k
+```
+
+The key is **not hashed**: it must already be hash-like (a random `UID128.New()`, or the output of a
+hash such as Mosaik.Core's `Hashes.Hash128`). Its halves drive double hashing — probe `i` sets bit
+`⌊(High + i·Low)·m / 2⁶⁴⌋` — so a structured key (a counter, an id with fixed bits) must be hashed
+first. Each probe is a separate cache line; `BloomFilter` (one cache line per key) is faster per
+lookup, `Bloom` uses fewer bits for the same false-positive rate.
+
 ### Thread-safe
 
 ```csharp
@@ -105,15 +142,22 @@ The format is the Go library's `MarshalBinary` (version 1): version, k, block co
 the block words, then a CRC-32C trailer, all little-endian. Only `BloomFilter` is serializable: a
 concurrent filter cannot be snapshotted soundly while writers run.
 
-## Compatibility with the Go library
+## Compatibility with the Go libraries
 
-The key-to-bit mapping, the partitions and the serialized format are the Go library's, bit for bit.
+`BloomFilter` and its siblings: the key-to-bit mapping, the partitions and the serialized format are
+jcalabro/gloom's, bit for bit.
 The test suite runs the Go library's golden files in place
-([`.reference/testdata/golden`](https://github.com/theolivenbaum/gloom/tree/main/.reference/testdata/golden)):
+([`.reference/gloom/testdata/golden`](https://github.com/theolivenbaum/gloom/tree/main/.reference/gloom/testdata/golden)):
 every filter Go serialized loads and answers identically, and rebuilding each recipe here produces
 the same bytes. `BloomParameters` is checked against values computed by the Go code.
 
-Two differences in the API surface:
+`Bloom` is deliberately not bits-and-blooms/bloom compatible (that library murmur-hashes byte keys
+and writes a big-endian format); it keeps the API (`Add`, `Test` → `MayContain`, `TestAndAdd`,
+`TestOrAdd`, `Locations` / `MayContainLocations`, `Merge`, `Copy`, `ApproximatedSize`,
+`EstimateParameters`, `EstimateFalsePositiveRate`) on `UID128` keys, with its own format
+(`'B'`, version, k, m, words, CRC-32C).
+
+Two differences from jcalabro/gloom in the API surface:
 
 - A `string` (or `ReadOnlySpan<char>`) key is hashed as its UTF-8 bytes — what Go's `AddString`
   hashes for valid UTF-8. A Go string holding invalid UTF-8 corresponds to the `ReadOnlySpan<byte>`
@@ -155,7 +199,7 @@ independent positions (a Chinese Remainder Theorem argument).
 Measured 2026-10-20 on a 4-vCPU shared VM: Intel Xeon @ 2.10 GHz (Sapphire Rapids class, AVX-512).
 .NET 10.0.13 with BenchmarkDotNet 0.15.8, default job: pilot, warm-up and at least 15 measured
 iterations, so tiered JIT is out of the figures. Go 1.26.0 with `GOAMD64=v3`, `-count=5`, median
-of the five. Same workloads on both sides: the Go suite's (`.reference/benchmarks`), a filter for
+of the five. Same workloads on both sides: the Go suite's (`.reference/gloom/benchmarks`), a filter for
 1M items at 1%, keys `key-0` … `key-999999`. Time per operation; lower is better.
 
 | Benchmark | Go | C# | |
@@ -221,7 +265,7 @@ dotnet test tests/Gloom.Tests -c Release
 dotnet run -c Release --project benchmarks/Gloom.Benchmarks -- --filter '*'
 ```
 
-The Go reference benchmarks: `cd .reference/benchmarks && GOAMD64=v3 go test -bench=. -benchmem`.
+The Go reference benchmarks: `cd .reference/gloom/benchmarks && GOAMD64=v3 go test -bench=. -benchmem`.
 
 The package is published to nuget.org by Azure DevOps
 ([`.devops/azure-pipelines.yml`](https://github.com/theolivenbaum/gloom/blob/main/.devops/azure-pipelines.yml))

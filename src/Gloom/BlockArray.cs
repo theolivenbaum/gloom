@@ -134,11 +134,11 @@ internal sealed unsafe class BlockArray
     }
 
     /// <summary>
-    /// Counts set bits over whole blocks: with AVX-512BW, Muła's nibble lookup (VPSHUFB) summed per
+    /// Counts set bits over <paramref name="words"/> words: with AVX-512BW, Muła's nibble lookup (VPSHUFB) summed per
     /// 64-bit lane with VPSADBW, a block per vector and two accumulators; otherwise four independent
     /// scalar POPCNT chains. (.NET exposes no VPOPCNTQ.)
     /// </summary>
-    private static ulong PopCount(ulong* p, ulong words)
+    internal static ulong PopCount(ulong* p, ulong words)
     {
         ulong i = 0;
 
@@ -149,13 +149,15 @@ internal sealed unsafe class BlockArray
 
             for (; i + 16 <= words; i += 16)
             {
-                acc0 += PopCountLanes(Vector512.LoadAligned((byte*)(p + i)));
-                acc1 += PopCountLanes(Vector512.LoadAligned((byte*)(p + i + 8)));
+                acc0 += PopCountLanes(Vector512.Load((byte*)(p + i)));
+                acc1 += PopCountLanes(Vector512.Load((byte*)(p + i + 8)));
             }
 
-            for (; i + 8 <= words; i += 8) acc0 += PopCountLanes(Vector512.LoadAligned((byte*)(p + i)));
+            for (; i + 8 <= words; i += 8) acc0 += PopCountLanes(Vector512.Load((byte*)(p + i)));
 
-            return Vector512.Sum(acc0 + acc1);
+            ulong total = Vector512.Sum(acc0 + acc1);
+            for (; i < words; i++) total += (ulong)BitOperations.PopCount(p[i]);
+            return total;
         }
 
         ulong c0 = 0, c1 = 0, c2 = 0, c3 = 0;
@@ -167,6 +169,8 @@ internal sealed unsafe class BlockArray
             c2 += (ulong)BitOperations.PopCount(p[i + 2]);
             c3 += (ulong)BitOperations.PopCount(p[i + 3]);
         }
+
+        for (; i < words; i++) c0 += (ulong)BitOperations.PopCount(p[i]);
 
         return c0 + c1 + c2 + c3;
     }

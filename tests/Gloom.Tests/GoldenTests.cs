@@ -6,7 +6,7 @@ using System.Text.Json;
 namespace Gloom.Tests;
 
 /// <summary>
-/// The Go library's golden files (.reference/testdata/golden), checked against this port: every
+/// The Go library's golden files (.reference/gloom/testdata/golden), checked against this port: every
 /// filter the Go code serialized loads here, answers identically, and rebuilding its recipe here
 /// produces the same bytes. Port of golden_test.go.
 /// </summary>
