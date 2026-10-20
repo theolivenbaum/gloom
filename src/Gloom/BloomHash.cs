@@ -141,7 +141,7 @@ public static class BloomHash
         /// <paramref name="last"/> bytes [len-8, len).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static UID128 Hash9To16(ulong first, ulong last, int length)
+        internal static UID128 Hash9To16(ulong first, ulong last, int length)
         {
             ulong m128High = Math.BigMul(first ^ last ^ BITFLIP_LOW, PRIME64_1, out ulong m128Low);
             m128Low       += (ulong)(length - 1) << 54;
@@ -157,7 +157,7 @@ public static class BloomHash
 
         /// <summary><c>XXH3_len_4to8_128b</c>: bytes [0, 4) and [len-4, len) of the input.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static UID128 Hash4To8(uint first, uint last, int length)
+        internal static UID128 Hash4To8(uint first, uint last, int length)
         {
             ulong keyed    = (first + ((ulong)last << 32)) ^ BITFLIP_4TO8;
             ulong m128High = Math.BigMul(keyed, PRIME64_1 + ((ulong)length << 2), out ulong m128Low);

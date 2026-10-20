@@ -92,9 +92,21 @@ double fp2  = Bloom.TheoreticalFalsePositiveRate(m, k, 1_000_000); // (1 - e^(-k
 ```
 
 The key is **not hashed**: it must already be hash-like (a random `UID128.New()`, or the output of a
-hash such as Mosaik.Core's `Hashes.Hash128`). Its halves drive double hashing — probe `i` sets bit
-`⌊(High + i·Low)·m / 2⁶⁴⌋` — so a structured key (a counter, an id with fixed bits) must be hashed
-first. Each probe is a separate cache line; `BloomFilter` (one cache line per key) is faster per
+hash). Its halves drive double hashing — probe `i` sets bit `⌊(High + i·Low)·m / 2⁶⁴⌋` — so anything
+else goes through `BloomKey` first:
+
+```csharp
+bloom.Add(BloomKey.From(42));                 // int, uint, long, ulong, Int128, UInt128, double
+bloom.Add(BloomKey.From(Guid.NewGuid()));
+bloom.Add(BloomKey.From("some key"));         // string / ReadOnlySpan<char>: hashed as UTF-8
+bloom.Add(BloomKey.From(bytes));              // ReadOnlySpan<byte>
+bloom.Add(BloomKey.From(sequentialUid));      // a UID128 (or UID64) that is not hash-like
+```
+
+Each is the xxh3-128 hash of the value's little-endian bytes (`BloomKey.From(42)` equals
+`BloomKey.From` of its four bytes). Fixed-width values use xxh3's short-input paths inlined for their
+length: measured 1.5 ns for an `int`, 3.6 ns for a `Guid`, 3.7 ns for a `UID128`, 6.4 ns for a short
+string. Each probe is a separate cache line; `BloomFilter` (one cache line per key) is faster per
 lookup, `Bloom` uses fewer bits for the same false-positive rate.
 
 ### Thread-safe

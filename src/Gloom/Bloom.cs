@@ -18,7 +18,9 @@ namespace Gloom;
 /// <c>Hashes.Hash128</c>), so it is not hashed again: its halves drive Kirsch–Mitzenmacher double
 /// hashing, probe <c>i</c> landing on bit <c>⌊(High + i·Low) · m / 2^64⌋</c> (a multiply-shift
 /// reduction, no divide). A key that is not uniformly distributed — a counter, a structured id —
-/// must be hashed first, or the false-positive rate is not what <see cref="WithEstimates"/> promises.
+/// must be hashed first — <see cref="BloomKey"/> builds a hash-like key from a structured
+/// <see cref="UID128"/>, an integer, a <see cref="Guid"/>, bytes or text — or the false-positive
+/// rate is not what <see cref="WithEstimates"/> promises.
 /// </para>
 /// <para>
 /// Unlike <see cref="BloomFilter"/>, the k probes land on k different cache lines; prefer

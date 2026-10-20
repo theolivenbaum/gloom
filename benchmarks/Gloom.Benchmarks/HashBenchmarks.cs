@@ -45,3 +45,35 @@ public class HashBenchmarks
         return x;
     }
 }
+
+/// <summary><see cref="BloomKey"/>: building a hash-like UID128 from other values.</summary>
+public class BloomKeyBenchmarks
+{
+    private const int KEYS = 1_000_000;
+
+    private int[]    _ints  = null!;
+    private Guid[]   _guids = null!;
+    private UID128[] _uids  = null!;
+    private string[] _str   = null!;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        _ints  = Enumerable.Range(0, KEYS).ToArray();
+        _guids = Enumerable.Range(0, KEYS).Select(_ => Guid.NewGuid()).ToArray();
+        _uids  = Enumerable.Range(0, KEYS).Select(i => new UID128(0, (ulong)i)).ToArray();
+        _str   = Enumerable.Range(0, KEYS).Select(i => $"key-{i}").ToArray();
+    }
+
+    [Benchmark(OperationsPerInvoke = KEYS)]
+    public ulong FromInt() { ulong x = 0; var k = _ints; for (int i = 0; i < k.Length; i++) x += BloomKey.From(k[i]).Low; return x; }
+
+    [Benchmark(OperationsPerInvoke = KEYS)]
+    public ulong FromGuid() { ulong x = 0; var k = _guids; for (int i = 0; i < k.Length; i++) x += BloomKey.From(k[i]).Low; return x; }
+
+    [Benchmark(OperationsPerInvoke = KEYS)]
+    public ulong FromUID128() { ulong x = 0; var k = _uids; for (int i = 0; i < k.Length; i++) x += BloomKey.From(k[i]).Low; return x; }
+
+    [Benchmark(OperationsPerInvoke = KEYS)]
+    public ulong FromString() { ulong x = 0; var k = _str; for (int i = 0; i < k.Length; i++) x += BloomKey.From(k[i]).Low; return x; }
+}

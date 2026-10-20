@@ -26,6 +26,7 @@ on every push to `main` (CalVer `yy.M.<buildId>`, the repository README as the p
 | `src/Gloom/BloomParameters.cs`, `PrimePartition.cs` | params.go |
 | `src/Gloom/StripedCounter.cs` | counter.go |
 | `src/Gloom/Bloom.cs` | bloom.go of bits-and-blooms/bloom, on `UID128` keys (double hashing of the key's halves, multiply-shift reduction) |
+| `src/Gloom/BloomKey.cs` | not ported: hash-like `UID128` keys for `Bloom` from integers, `Guid`, bytes, text and structured UIDs |
 | `src/Gloom/BlockArray.cs` | the aligned block allocation and the probe / popcount kernels |
 | `tests/Gloom.Tests/BloomTests.cs` | bloom_test.go of bits-and-blooms/bloom |
 | `tests/Gloom.Tests/` | the gloom Go tests; `GoldenTests` runs `.reference/gloom/testdata/golden` in place |
@@ -39,7 +40,9 @@ on every push to `main` (CalVer `yy.M.<buildId>`, the repository README as the p
 - **Keys are `Mosaik.Core`'s `UID.UID128`** where a 128-bit value is involved: the hash of every
   key is a `UID128` (`High` = xxh3's high 64 bits). Strings hash as UTF-8.
 - **`Bloom` takes only `UID128` keys and treats them as hashes.** Do not add a hashing step or
-  byte/string overloads to it; a caller with a structured key hashes it first.
+  byte/string overloads to it. Hashing other values into a key is `BloomKey`'s job
+  (`src/Gloom/BloomKey.cs`): every overload is xxh3-128 of the value's little-endian bytes, which
+  `BloomKeyTests` pins against `XxHash128`; a new overload follows the same rule.
 - `tests/Gloom.Tests/fixtures/params_vectors.json` holds `OptimalParams` /
   `EstimateFalsePositiveRate` values computed by the Go code (floats as bit patterns). Regenerate it
   from `.reference/gloom` only if the Go code changes.
