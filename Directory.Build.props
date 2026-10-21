@@ -1,0 +1,35 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TieredPGO>true</TieredPGO>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Package metadata shared by every project that ships to NuGet. -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Company>Curiosity GmbH</Company>
+    <Authors>Curiosity GmbH, the gloom authors and the bits-and-blooms/bloom authors</Authors>
+    <Product>Gloom</Product>
+    <Description>Gloom: high-performance bloom filters for .NET on Mosaik.Core's UID128. Ports of github.com/jcalabro/gloom (cache-line blocked one-hashing; single-threaded, lock-free atomic and sharded; xxh3-128; serialization compatible with the Go library) and github.com/bits-and-blooms/bloom (a classic filter keyed by hash-like UID128s, AVX-512 probes).</Description>
+    <Copyright>Copyright (c) 2026 Curiosity GmbH; Copyright (c) jcalabro; Copyright (c) 2014 Will Fitzgerald</Copyright>
+    <PackageLicenseExpression>MIT AND BSD-2-Clause</PackageLicenseExpression>
+    <PackageTags>bloom-filter;bloom;probabilistic;xxh3;uid128;mosaik;curiosity</PackageTags>
+    <PackageProjectUrl>https://github.com/theolivenbaum/gloom</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/theolivenbaum/gloom</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <!-- The repository README is the package README on nuget.org (its links are absolute for that reason). -->
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+</Project>
